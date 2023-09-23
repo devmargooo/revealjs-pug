@@ -75,7 +75,7 @@ let cache = {};
 gulp.task('js-es5', () => {
     return rollup({
         cache: cache.umd,
-        input: 'js/index.js',
+        input: 'src/js/index.js',
         plugins: [
             resolve(),
             commonjs(),
@@ -98,7 +98,7 @@ gulp.task('js-es5', () => {
 gulp.task('js-es6', () => {
     return rollup({
         cache: cache.esm,
-        input: 'js/index.js',
+        input: 'src/js/index.js',
         plugins: [
             resolve(),
             commonjs(),
@@ -178,11 +178,11 @@ function compileSass() {
   });
 }
 
-gulp.task('css-themes', () => gulp.src(['./css/theme/source/*.{sass,scss}'])
+gulp.task('css-themes', () => gulp.src(['./src/css/theme/source/*.{sass,scss}'])
         .pipe(compileSass())
         .pipe(gulp.dest('./dist/theme')))
 
-gulp.task('css-core', () => gulp.src(['css/reveal.scss'])
+gulp.task('css-core', () => gulp.src(['src/css/reveal.scss'])
     .pipe(compileSass())
     .pipe(autoprefixer())
     .pipe(minify({compatibility: 'ie9'}))
@@ -194,7 +194,7 @@ gulp.task('css', gulp.parallel('css-themes', 'css-core'))
 gulp.task('qunit', () => {
 
     let serverConfig = {
-        root,
+        root: "dist",
         port: 8009,
         host: 'localhost',
         name: 'test-server'
@@ -202,7 +202,7 @@ gulp.task('qunit', () => {
 
     let server = connect.server( serverConfig )
 
-    let testFiles = glob.sync('test/*.html' )
+    let testFiles = glob.sync('src/test/*.html' )
 
     let totalTests = 0;
     let failingTests = 0;
@@ -258,7 +258,7 @@ gulp.task('qunit', () => {
     } );
 } )
 
-gulp.task('eslint', () => gulp.src(['./js/**', 'gulpfile.js'])
+gulp.task('eslint', () => gulp.src(['./src/js/**', 'gulpfile.js'])
         .pipe(eslint())
         .pipe(eslint.format()))
 
@@ -272,7 +272,7 @@ gulp.task('package', gulp.series(() =>
 
     gulp.src(
         [
-            './index.html',
+            './src/index.html',
             './dist/**',
             './lib/**',
             './images/**',
@@ -285,13 +285,13 @@ gulp.task('package', gulp.series(() =>
 
 ))
 
-gulp.task('reload', () => gulp.src(['index.html'])
+gulp.task('reload', () => gulp.src(['dist/index.html'])
     .pipe(connect.reload()));
 
 gulp.task('serve', () => {
 
     connect.server({
-        root: root,
+        root: "dist",
         port: port,
         host: host,
         livereload: true
@@ -304,20 +304,20 @@ gulp.task('serve', () => {
         `!${slidesRoot}**/node_modules/**`, // ignore node_modules
     ], gulp.series('reload'))
 
-    gulp.watch(['js/**'], gulp.series('js', 'reload', 'eslint'))
+    gulp.watch(['src/js/**'], gulp.series('js', 'reload', 'eslint'))
 
     gulp.watch(['plugin/**/plugin.js', 'plugin/**/*.html'], gulp.series('plugins', 'reload'))
 
     gulp.watch([
-        'css/theme/source/**/*.{sass,scss}',
-        'css/theme/template/*.{sass,scss}',
+        'src/css/theme/source/**/*.{sass,scss}',
+        'src/css/theme/template/*.{sass,scss}',
     ], gulp.series('css-themes', 'reload'))
 
     gulp.watch([
-        'css/*.scss',
-        'css/print/*.{sass,scss,css}'
+        'src/css/*.scss',
+        'src/css/print/*.{sass,scss,css}'
     ], gulp.series('css-core', 'reload'))
 
-    gulp.watch(['test/*.html'], gulp.series('test'))
+    gulp.watch(['src/test/*.html'], gulp.series('test'))
 
 })
