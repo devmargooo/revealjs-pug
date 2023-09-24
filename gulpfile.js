@@ -21,8 +21,9 @@ const eslint = require('gulp-eslint')
 const minify = require('gulp-clean-css')
 const connect = require('gulp-connect')
 const autoprefixer = require('gulp-autoprefixer')
+const pug = require('gulp-pug')
+const beautify = require('gulp-html-beautify')
 
-const root = yargs.argv.root || '.'
 const port = yargs.argv.port || 8000
 const host = yargs.argv.host || 'localhost'
 
@@ -191,6 +192,16 @@ gulp.task('css-core', () => gulp.src(['src/css/reveal.scss'])
 
 gulp.task('css', gulp.parallel('css-themes', 'css-core'))
 
+gulp.task('pug', () => gulp.src(['src/pug/index.pug'])
+    .pipe(pug())
+    .pipe(gulp.dest('./dist')))
+
+gulp.task('beautify', () => gulp.src('dist/index.html')
+    .pipe(beautify({ indent_size: 4 })) // Customize the formatting options
+    .pipe(gulp.dest('dist')))
+
+gulp.task('html', gulp.series('pug', 'beautify'))
+
 gulp.task('qunit', () => {
 
     let serverConfig = {
@@ -264,26 +275,9 @@ gulp.task('eslint', () => gulp.src(['./src/js/**', 'gulpfile.js'])
 
 gulp.task('test', gulp.series( 'eslint', 'qunit' ))
 
-gulp.task('default', gulp.series(gulp.parallel('js', 'css', 'plugins'), 'test'))
+gulp.task('default', gulp.series(gulp.parallel('html', 'js', 'css', 'plugins'), 'test'))
 
-gulp.task('build', gulp.parallel('js', 'css', 'plugins'))
-
-gulp.task('package', gulp.series(() =>
-
-    gulp.src(
-        [
-            './src/index.html',
-            './dist/**',
-            './lib/**',
-            './images/**',
-            './plugin/**',
-            './**/*.md'
-        ],
-        { base: './' }
-    )
-    .pipe(zip('reveal-js-presentation.zip')).pipe(gulp.dest('./'))
-
-))
+gulp.task('build', gulp.parallel('html', 'js', 'css', 'plugins'))
 
 gulp.task('reload', () => gulp.src(['dist/index.html'])
     .pipe(connect.reload()));
@@ -297,12 +291,14 @@ gulp.task('serve', () => {
         livereload: true
     })
 
-    const slidesRoot = root.endsWith('/') ? root : root + '/'
+    const slidesRoot = './src/'
     gulp.watch([
         slidesRoot + '**/*.html',
         slidesRoot + '**/*.md',
         `!${slidesRoot}**/node_modules/**`, // ignore node_modules
     ], gulp.series('reload'))
+
+    gulp.watch(['src/pug/**/*.pug'], gulp.series('html', 'reload'))
 
     gulp.watch(['src/js/**'], gulp.series('js', 'reload', 'eslint'))
 
@@ -318,6 +314,6 @@ gulp.task('serve', () => {
         'src/css/print/*.{sass,scss,css}'
     ], gulp.series('css-core', 'reload'))
 
-    gulp.watch(['src/test/*.html'], gulp.series('test'))
+    gulp.watch(['dist/test/*.html'], gulp.series('test'))
 
 })
